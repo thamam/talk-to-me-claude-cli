@@ -1,0 +1,43 @@
+[project]
+name = "talk-to-me-claude-cli"
+version = "0.1.0"
+description = "Voice narration layer for Claude Code CLI - explains what was done, not what's on screen"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Tomer Hamam"}
+]
+
+dependencies = [
+    "openai>=1.0.0",
+    "elevenlabs>=0.2.0",
+    "python-dotenv>=1.0.0",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12.1",
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "pyttsx3>=2.90",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+talk-to-claude = "src.wrapper:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
