@@ -1,0 +1,4 @@
+{
+  "userPromptSubmit": "hooks/inject_narration_prompt.py",
+  "stop": "hooks/process_response.py"
+}

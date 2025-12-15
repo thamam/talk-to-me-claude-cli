@@ -1,0 +1,29 @@
+{
+  "namespace": "talk-to-me",
+  "commands": [
+    {
+      "name": "mode",
+      "description": "Set narration mode (coding_only/conversational/auto)"
+    },
+    {
+      "name": "verbosity",
+      "description": "Set narration verbosity level (brief/medium/detailed)"
+    },
+    {
+      "name": "provider",
+      "description": "Set TTS/STT provider"
+    },
+    {
+      "name": "listen",
+      "description": "Activate voice input (push-to-talk)"
+    },
+    {
+      "name": "status",
+      "description": "Show current voice settings"
+    },
+    {
+      "name": "test",
+      "description": "Test TTS with sample message"
+    }
+  ]
+}

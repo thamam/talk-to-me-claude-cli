@@ -1,6 +1,6 @@
 """Extract voice narration from Claude's output.
 
-This module parses Claude's responses to find and extract <voice_narration>
+This module parses Claude's responses to find and extract [VOICE_NARRATION]
 tags, cleaning the text for optimal TTS output.
 """
 
@@ -8,24 +8,42 @@ import re
 from typing import Optional, Tuple
 
 
-def extract_narration(text: str) -> Optional[str]:
+def extract_narration(text: str, multi_point: bool = True) -> Optional[str]:
     """Extract voice narration from Claude's output.
 
     Args:
         text: Claude's response text
+        multi_point: If True, extract and combine ALL narration blocks.
+                     If False, extract only the first block (legacy behavior).
 
     Returns:
         Extracted narration text, or None if no narration found
     """
-    # Match <voice_narration>...</voice_narration> tags
-    pattern = r'<voice_narration>(.*?)</voice_narration>'
-    match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+    # Match [VOICE_NARRATION]...[/VOICE_NARRATION] tags
+    pattern = r'\[VOICE_NARRATION\](.*?)\[/VOICE_NARRATION\]'
 
-    if not match:
-        return None
+    if multi_point:
+        # Find ALL narration blocks
+        matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
 
-    narration = match.group(1)
-    return clean_narration(narration)
+        if not matches:
+            return None
+
+        # Clean each block and join with pauses
+        cleaned_blocks = [clean_narration(block) for block in matches]
+
+        # Join multiple blocks with pause indicators
+        # TTS will naturally pause at periods
+        return ". ".join(cleaned_blocks)
+    else:
+        # Legacy: Only extract first block
+        match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+
+        if not match:
+            return None
+
+        narration = match.group(1)
+        return clean_narration(narration)
 
 
 def clean_narration(narration: str) -> str:
@@ -36,6 +54,7 @@ def clean_narration(narration: str) -> str:
     - Excessive newlines
     - Markdown formatting that sounds bad when spoken
     - Code blocks
+    - Emojis and special symbols
     - Special characters that TTS might mispronounce
 
     Args:
@@ -65,11 +84,53 @@ def clean_narration(narration: str) -> str:
     # Remove markdown links ([text](url))
     cleaned = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', cleaned)
 
+    # Remove checkmarks and other symbols that sound weird
+    cleaned = cleaned.replace('✅', '')
+    cleaned = cleaned.replace('✓', '')
+    cleaned = cleaned.replace('❌', '')
+    cleaned = cleaned.replace('✗', '')
+    cleaned = cleaned.replace('⚠️', '')
+    cleaned = cleaned.replace('🎉', '')
+    cleaned = cleaned.replace('🎤', '')
+    cleaned = cleaned.replace('🔊', '')
+    cleaned = cleaned.replace('📢', '')
+    cleaned = cleaned.replace('→', '')
+    cleaned = cleaned.replace('•', '')
+    cleaned = cleaned.replace('—', '-')
+    cleaned = cleaned.replace('–', '-')
+
+    # Remove emoji ranges (comprehensive)
+    # This covers most emoji characters
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        u"\U00002500-\U00002BEF"  # chinese char
+        u"\U00002702-\U000027B0"
+        u"\U00002702-\U000027B0"
+        u"\U000024C2-\U0001F251"
+        u"\U0001f926-\U0001f937"
+        u"\U00010000-\U0010ffff"
+        u"\u2640-\u2642"
+        u"\u2600-\u2B55"
+        u"\u200d"
+        u"\u23cf"
+        u"\u23e9"
+        u"\u231a"
+        u"\ufe0f"  # dingbats
+        u"\u3030"
+        "]+", flags=re.UNICODE)
+    cleaned = emoji_pattern.sub(r'', cleaned)
+
     # Replace multiple spaces with single space
     cleaned = re.sub(r'\s+', ' ', cleaned)
 
     # Remove URLs (they sound terrible when spoken)
     cleaned = re.sub(r'https?://\S+', '', cleaned)
+
+    # Remove standalone symbols and punctuation that might remain
+    cleaned = re.sub(r'\s+[^\w\s,.!?-]+\s+', ' ', cleaned)
 
     return cleaned.strip()
 
@@ -85,7 +146,7 @@ def remove_narration_tags(text: str) -> str:
     Returns:
         Text with narration tags removed
     """
-    pattern = r'<voice_narration>.*?</voice_narration>'
+    pattern = r'\[VOICE_NARRATION\].*?\[/VOICE_NARRATION\]'
     return re.sub(pattern, '', text, flags=re.DOTALL | re.IGNORECASE).strip()
 
 
@@ -117,11 +178,11 @@ Editing src/auth/login.py...
 Editing tests/test_login.py...
   + Added test_invalid_email (lines 67-72)
 
-<voice_narration>
+[VOICE_NARRATION]
 I've strengthened the login system by adding email validation and improving
 the error messages users will see when something goes wrong. I also added
 tests to ensure the validation catches invalid email formats.
-</voice_narration>
+[/VOICE_NARRATION]
 
 All tests passing ✓
 """

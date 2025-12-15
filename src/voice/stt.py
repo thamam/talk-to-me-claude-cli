@@ -25,6 +25,12 @@ try:
 except ImportError:
     AUDIO_RECORDING_AVAILABLE = False
 
+try:
+    import speech_recognition as sr
+    SPEECH_RECOGNITION_AVAILABLE = True
+except ImportError:
+    SPEECH_RECOGNITION_AVAILABLE = False
+
 
 class STTProvider(ABC):
     """Abstract base class for STT providers."""
@@ -212,6 +218,79 @@ class LocalWhisper(STTProvider):
         raise NotImplementedError("Local Whisper listen() not yet implemented")
 
 
+class MacOSSTT(STTProvider):
+    """macOS native STT provider using built-in speech recognition."""
+
+    def __init__(self, language: str = "en-US"):
+        """Initialize macOS STT provider.
+
+        Args:
+            language: Language code (e.g., 'en-US', 'es-ES')
+        """
+        if not SPEECH_RECOGNITION_AVAILABLE:
+            raise ImportError("speech_recognition not installed. Run: pip install SpeechRecognition")
+
+        self.recognizer = sr.Recognizer()
+        self.language = language
+
+    def transcribe(self, audio_path: Path) -> str:
+        """Transcribe audio file using macOS speech recognition.
+
+        Args:
+            audio_path: Path to audio file
+
+        Returns:
+            Transcribed text
+        """
+        if not audio_path.exists():
+            raise FileNotFoundError(f"Audio file not found: {audio_path}")
+
+        with sr.AudioFile(str(audio_path)) as source:
+            audio = self.recognizer.record(source)
+            try:
+                # Use macOS built-in recognition (offline, free)
+                text = self.recognizer.recognize_sphinx(audio)
+                return text
+            except sr.UnknownValueError:
+                raise ValueError("Could not understand audio")
+            except sr.RequestError as e:
+                raise RuntimeError(f"Speech recognition error: {e}")
+
+    def listen(self, duration: Optional[float] = None) -> str:
+        """Record audio and transcribe using macOS microphone.
+
+        Args:
+            duration: Recording duration in seconds (None = auto-detect silence)
+
+        Returns:
+            Transcribed text
+        """
+        print("🎤 Listening... ", end="", flush=True)
+
+        with sr.Microphone() as source:
+            # Adjust for ambient noise
+            self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+
+            if duration:
+                print(f"({duration}s)")
+                audio = self.recognizer.record(source, duration=duration)
+            else:
+                print("(speak now)")
+                audio = self.recognizer.listen(source)
+
+        print("✓ Processing...")
+
+        try:
+            # Use macOS built-in recognition (offline, free)
+            text = self.recognizer.recognize_sphinx(audio)
+            print(f"✓ Transcription: {text}")
+            return text
+        except sr.UnknownValueError:
+            raise ValueError("Could not understand audio")
+        except sr.RequestError as e:
+            raise RuntimeError(f"Speech recognition error: {e}")
+
+
 def get_stt_provider(
     provider: str = "openai",
     model: str = "whisper-1",
@@ -220,7 +299,7 @@ def get_stt_provider(
     """Get STT provider instance.
 
     Args:
-        provider: Provider name (openai, local)
+        provider: Provider name (openai, local, macos)
         model: Model to use
         language: Language code or None for auto-detect
 
@@ -233,8 +312,11 @@ def get_stt_provider(
         return OpenAIWhisper(model=model, language=language)
     elif provider == "local":
         return LocalWhisper(model_name=model)
+    elif provider == "macos":
+        lang = language or "en-US"
+        return MacOSSTT(language=lang)
     else:
-        raise ValueError(f"Unknown STT provider: {provider}")
+        raise ValueError(f"Unknown STT provider: {provider}. Choose: openai, local, or macos")
 
 
 def listen(

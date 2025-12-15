@@ -41,71 +41,96 @@ Editing tests/test_login.py...
 
 ## 🚀 Quick Start
 
-### 1. Install
+### One-Line Installation (Easiest)
+
+Install from anywhere without cloning:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/talk-to-me-claude-cli.git
+curl -sSL https://raw.githubusercontent.com/yourusername/talk-to-me-claude-cli/main/install-remote.sh | bash
+```
+
+Or specify custom install location:
+```bash
+curl -sSL https://raw.githubusercontent.com/yourusername/talk-to-me-claude-cli/main/install-remote.sh | bash -s $HOME/my-location
+```
+
+Default location: `~/.talk-to-me-claude`
+
+### Local Installation (If You Have the Repo)
+
+```bash
+# If you already cloned the repository
 cd talk-to-me-claude-cli
+./install.sh
 
-# Install dependencies
-pip install -r requirements.txt
+# Edit .env and add your API keys
+nano .env
 
-# Or using the package
-pip install -e .
+# Restart Claude Code
+# Voice narration is now active!
 ```
 
-### 2. Configure
+The installer automatically:
+- ✅ Checks Python 3.11+ is installed
+- ✅ Installs all dependencies
+- ✅ Sets up MCP server configuration
+- ✅ Creates hooks for Claude Code
+- ✅ Configures slash commands
+- ✅ Runs tests to verify installation
+
+### Test It
 
 ```bash
-# Copy environment template
-cp .env.example .env
+# Test voice narration
+# Ask Claude to do a coding task and listen for audio
 
-# Edit .env and add your OpenAI API key
-# OPENAI_API_KEY=your-key-here
-```
+# Test voice input
+/talk-to-me:listen
 
-### 3. Run
-
-```bash
-# Check configuration
-python -m src.wrapper --check
-
-# Run in voice mode (demo)
-python -m src.wrapper --voice
-
-# Or use the installed command
-talk-to-claude --voice
+# Change narration mode
+/talk-to-me:mode auto          # Smart mode (default)
+/talk-to-me:mode coding_only   # Only narrate code changes
+/talk-to-me:mode conversational # Narrate everything
 ```
 
 ---
 
 ## 📋 Features
 
-### ✅ Phase 1 (Current - MVP)
+### ✅ Completed (v1.0)
 
 - [x] Custom prompts with narration tags
-- [x] Narration extraction from Claude's output
-- [x] OpenAI TTS for voice output
-- [x] OpenAI Whisper for voice input
+- [x] Multi-point narration (captures comprehensive output)
+- [x] Claude Code CLI integration via hooks
+- [x] MCP server with 6 tools
+- [x] Session management and conversation history
+- [x] Multiple TTS providers (OpenAI, ElevenLabs, local)
+- [x] Multiple STT providers (OpenAI Whisper, macOS native, local)
 - [x] Configurable verbosity (brief, medium, detailed)
-- [x] Local TTS fallback (pyttsx3)
+- [x] Three narration modes (coding_only, conversational, auto)
+- [x] Voice input via slash command
+- [x] Background TTS (non-blocking)
+- [x] Emoji/symbol cleaning for clean audio
+- [x] Comprehensive test suite (61 tests)
+- [x] One-command installation
 
-### 🚧 Phase 2 (Coming Soon)
+### 🚧 In Backlog
 
-- [ ] Actual Claude Code CLI integration
-- [ ] MCP server implementation
-- [ ] Provider fallback chain
-- [ ] PTT (Push-to-Talk) support
-- [ ] Session summaries
+- [ ] Auto-listen mode (60s VAD-triggered listening)
+- [ ] Push-to-talk daemon (Shift+Space hotkey)
+- [ ] Piper TTS integration (high-quality offline)
+- [ ] Personality system (casual, enthusiastic, focused, etc.)
+- [ ] Voice profile management (quick switching)
+- [ ] Language learning mode (dual-language narration)
+- [ ] Conversation export/import
 
-### 🔮 Phase 3 (Future)
+### 🔮 Future Enhancements
 
-- [ ] Multiple voice profiles
 - [ ] Voice interruption handling
-- [ ] Local Whisper support
+- [ ] TTS caching for common phrases
 - [ ] Custom vocabulary/pronunciation
-- [ ] Multi-language support
+- [ ] Streaming audio generation
+- [ ] Performance optimization
 
 ---
 
